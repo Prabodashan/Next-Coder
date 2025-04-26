@@ -1,13 +1,30 @@
 "use client";
 
-import { Loader2, Play } from "lucide-react";
+import { getExecutionResult, useCodeEditorStore } from "@/store/store";
+import { useUser } from "@clerk/nextjs";
+import { useMutation } from "convex/react";
 import { motion } from "framer-motion";
-import React from "react";
+import { Loader2, Play } from "lucide-react";
+import { api } from "../../../../convex/_generated/api";
 
-const RunButton = () => {
-  const isRunning = false; // Replace with your state management for running status
+function RunButton() {
+  const { user } = useUser();
+  const { runCode, language, isRunning } = useCodeEditorStore();
+  const saveExecution = useMutation(api.codeExecutions.saveExecution);
 
-  const handleRun = async () => {};
+  const handleRun = async () => {
+    await runCode();
+    const result = getExecutionResult();
+
+    if (user && result) {
+      await saveExecution({
+        language,
+        code: result.code,
+        output: result.output || undefined,
+        error: result.error || undefined,
+      });
+    }
+  };
 
   return (
     <motion.button
@@ -48,6 +65,5 @@ const RunButton = () => {
       </div>
     </motion.button>
   );
-};
-
+}
 export default RunButton;
